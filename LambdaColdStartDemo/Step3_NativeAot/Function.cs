@@ -1,5 +1,3 @@
-using System.Net;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
@@ -7,14 +5,13 @@ using Amazon.Lambda.Annotations;
 using Amazon.Lambda.Annotations.APIGateway;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
-using Amazon.SecretsManager;
-using Amazon.SecretsManager.Model;
+using LambdaColdStartDemo.NativeAot;
 
 // Configure Lambda Annotations for Native AOT
-[assembly: LambdaSerializer(typeof(SourceGeneratorLambdaJsonSerializer<LambdaColdStartDemo.Step3_NativeAot.ApiSerializerContext>))]
+[assembly: LambdaSerializer(typeof(SourceGeneratorLambdaJsonSerializer<ApiSerializerContext>))]
 [assembly: LambdaGlobalProperties(GenerateMain = true, Runtime = "provided.al2023")]
 
-namespace LambdaColdStartDemo.Step3_NativeAot;
+namespace LambdaColdStartDemo.NativeAot;
 
 /// <summary>
 /// STEP 3: NATIVE AOT WITH LAMBDA ANNOTATIONS
@@ -29,44 +26,8 @@ namespace LambdaColdStartDemo.Step3_NativeAot;
 /// - No manual Program.cs needed
 /// - Same familiar [HttpApi] attributes
 /// </summary>
-public class Functions
+public class Functions(IAmazonDynamoDB dynamoDbClient, HttpClient httpClient, AppConfig appConfig)
 {
-    private readonly AmazonDynamoDBClient _dynamoDbClient;
-    private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
-    private readonly string _tableName;
-
-    public Functions()
-    {
-        Console.WriteLine("Constructor starting (Native AOT with Annotations)...");
-
-        _dynamoDbClient = new AmazonDynamoDBClient();
-        _httpClient = new HttpClient();
-        _apiKey = FetchSecretSync();
-        _tableName = Environment.GetEnvironmentVariable("TABLE_NAME") ?? "Products";
-
-        Console.WriteLine("Constructor complete (Native AOT with Annotations)");
-    }
-
-    private string FetchSecretSync()
-    {
-        try
-        {
-            using var secretsClient = new AmazonSecretsManagerClient();
-            var secretResponse = secretsClient.GetSecretValueAsync(new GetSecretValueRequest
-            {
-                SecretId = Environment.GetEnvironmentVariable("SECRET_NAME") ?? "my-api-key"
-            }).GetAwaiter().GetResult();
-
-            return secretResponse.SecretString ?? "default-key";
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Could not fetch secret: {ex.Message}. Using default.");
-            return "default-key";
-        }
-    }
-
     /// <summary>
     /// Lambda Annotations makes AOT feel just like regular Lambda development.
     /// Same [HttpApi] attribute pattern you already know.
@@ -80,9 +41,9 @@ public class Functions
         List<Dictionary<string, AttributeValue>> items;
         try
         {
-            var scanResponse = await _dynamoDbClient.ScanAsync(new ScanRequest
+            var scanResponse = await dynamoDbClient.ScanAsync(new ScanRequest
             {
-                TableName = _tableName,
+                TableName = appConfig.TableName,
                 Limit = 10
             });
             items = scanResponse.Items;

@@ -6,7 +6,7 @@ Globals:
   Function:
     Timeout: 30
     Architectures:
-      - x86_64
+      - arm64
     Environment:
       Variables:
         TABLE_NAME: !Ref ProductsTable
@@ -23,8 +23,8 @@ Resources:
     Properties:
       FunctionName: ColdStartDemo-Step0-Baseline
       Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step0_Baseline.Function::Handler
-      Runtime: dotnet8
-      CodeUri: .
+      Runtime: dotnet10
+      CodeUri: ./Initial/
       MemorySize: 128  # LOW MEMORY = LOW CPU = SLOW
       Policies:
         - DynamoDBReadPolicy:
@@ -48,8 +48,8 @@ Resources:
     Properties:
       FunctionName: ColdStartDemo-Step1-Memory
       Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step1_Memory.Function::Handler
-      Runtime: dotnet8
-      CodeUri: .
+      Runtime: dotnet10
+      CodeUri: ./Initial/
       MemorySize: 1024  # MORE MEMORY = MORE CPU = FASTER
       Policies:
         - DynamoDBReadPolicy:
@@ -73,8 +73,8 @@ Resources:
     Properties:
       FunctionName: ColdStartDemo-Step2-Initialization
       Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step2_Initialization.Function::Handler
-      Runtime: dotnet8
-      CodeUri: .
+      Runtime: dotnet10
+      CodeUri: ./Initial/
       MemorySize: 1024
       Policies:
         - DynamoDBReadPolicy:
@@ -99,9 +99,12 @@ Resources:
     Properties:
       FunctionName: ColdStartDemo-Step3-NativeAOT
       Handler: bootstrap  # Lambda Annotations generates this
-      Runtime: provided.al2023  # Custom runtime for AOT
+      Runtime: dotnet10
       CodeUri: ./Step3_NativeAot/
       MemorySize: 1024
+      Environment:
+        Variables:
+          ANNOTATIONS_HANDLER: GetProducts
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref ProductsTable
@@ -113,8 +116,6 @@ Resources:
           Properties:
             Path: /step3
             Method: GET
-    Metadata:
-      BuildMethod: dotnet8-aot
 
   # Supporting infrastructure
   ProductsTable:

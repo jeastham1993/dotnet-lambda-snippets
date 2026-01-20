@@ -23,57 +23,11 @@ namespace LambdaColdStartDemo.Step2_Initialization;
 ///
 /// Move expensive initialization to constructor = faster warm invocations
 /// </summary>
-public class Function
+public class Function(AmazonDynamoDBClient dynamoDbClient, HttpClient httpClient, AppConfig appConfig)
 {
     // GOOD: Clients created once, reused across invocations
-    private readonly AmazonDynamoDBClient _dynamoDbClient;
-    private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
-    private readonly string _tableName;
-
-    /// <summary>
-    /// Constructor runs ONCE per cold start.
-    /// All expensive initialization happens here.
-    /// </summary>
-    public Function()
-    {
-        Console.WriteLine("Constructor starting - initializing resources once...");
-
-        // GOOD: DynamoDB client created once, reused for all invocations
-        Console.WriteLine("Creating DynamoDB client (one time)...");
-        _dynamoDbClient = new AmazonDynamoDBClient();
-
-        // GOOD: HttpClient created once - this is the recommended pattern
-        Console.WriteLine("Creating HTTP client (one time)...");
-        _httpClient = new HttpClient();
-
-        // GOOD: Fetch secrets once at startup, cache the value
-        Console.WriteLine("Fetching secrets (one time)...");
-        _apiKey = FetchSecretSync();
-
-        _tableName = Environment.GetEnvironmentVariable("TABLE_NAME") ?? "Products";
-
-        Console.WriteLine("Constructor complete - resources ready for reuse");
-    }
-
-    private string FetchSecretSync()
-    {
-        try
-        {
-            using var secretsClient = new AmazonSecretsManagerClient();
-            var secretResponse = secretsClient.GetSecretValueAsync(new GetSecretValueRequest
-            {
-                SecretId = Environment.GetEnvironmentVariable("SECRET_NAME") ?? "my-api-key"
-            }).GetAwaiter().GetResult();
-
-            return secretResponse.SecretString ?? "default-key";
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Could not fetch secret: {ex.Message}. Using default.");
-            return "default-key";
-        }
-    }
+    private readonly HttpClient _httpClient = httpClient;
+    private readonly AppConfig _appConfig = appConfig;
 
     /// <summary>
     /// Handler runs EVERY invocation.
@@ -89,9 +43,9 @@ public class Function
         List<Dictionary<string, AttributeValue>> items;
         try
         {
-            var scanResponse = await _dynamoDbClient.ScanAsync(new ScanRequest
+            var scanResponse = await dynamoDbClient.ScanAsync(new ScanRequest
             {
-                TableName = _tableName,
+                TableName = appConfig.TableName,
                 Limit = 10
             });
             items = scanResponse.Items;

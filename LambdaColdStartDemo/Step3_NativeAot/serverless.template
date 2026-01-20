@@ -1,9 +1,9 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
-  "Description": "This template is partially managed by Amazon.Lambda.Annotations (v1.6.1.0).",
+  "Description": "This template is partially managed by Amazon.Lambda.Annotations (v1.8.0.0).",
   "Resources": {
-    "LambdaColdStartDemoStep3NativeAotFunctionsGetProductsGenerated": {
+    "LambdaColdStartDemoNativeAotFunctionsGetProductsGenerated": {
       "Type": "AWS::Serverless::Function",
       "Metadata": {
         "Tool": "Amazon.Lambda.Annotations",
@@ -26,7 +26,7 @@
           "AWSLambdaBasicExecutionRole"
         ],
         "PackageType": "Zip",
-        "Handler": "LambdaColdStartDemo.NativeAot",
+        "Handler": "bootstrap",
         "Environment": {
           "Variables": {
             "ANNOTATIONS_HANDLER": "GetProducts"

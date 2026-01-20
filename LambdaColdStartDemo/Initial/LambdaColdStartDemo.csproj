@@ -1,33 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>bootstrap</AssemblyName>
     <Nullable>enable</Nullable>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <AWSProjectType>Lambda</AWSProjectType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-
-    <!-- NATIVE AOT CONFIGURATION -->
-    <PublishAot>true</PublishAot>
-    <StripSymbols>true</StripSymbols>
-
-    <!-- Required for Lambda Annotations AOT - generates Main method -->
-    <OutputType>exe</OutputType>
-
-    <!-- AOT optimizations -->
-    <OptimizationPreference>Speed</OptimizationPreference>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.Annotations" Version="1.8.0" />
     <PackageReference Include="Amazon.Lambda.Core" Version="2.8.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
-    <PackageReference Include="Amazon.Lambda.Annotations" Version="1.8.0" />
     <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.7.3" />
-    <PackageReference Include="Amazon.Lambda.RuntimeSupport" Version="1.14.1" />
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.10.8" />
     <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.4.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
+  </ItemGroup>
+
+  <!-- Exclude Step3_NativeAot - it has its own project file -->
+  <ItemGroup>
+    <Compile Remove="Step3_NativeAot\**" />
+    <Content Remove="Step3_NativeAot\**" />
+    <Content Include="..\template.yaml">
+      <Link>template.yaml</Link>
+    </Content>
+    <EmbeddedResource Remove="Step3_NativeAot\**" />
+    <None Remove="Step3_NativeAot\**" />
   </ItemGroup>
 </Project>

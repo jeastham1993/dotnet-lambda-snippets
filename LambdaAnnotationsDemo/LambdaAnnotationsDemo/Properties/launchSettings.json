@@ -1,0 +1,28 @@
+{
+  "profiles": {
+    "Aspire_GetRoot": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "exec --depsfile ./LambdaAnnotationsDemo.deps.json --runtimeconfig ./LambdaAnnotationsDemo.runtimeconfig.json $(HOME)/.dotnet/tools/.store/amazon.lambda.testtool/0.11.0/amazon.lambda.testtool/0.11.0/content/Amazon.Lambda.RuntimeSupport/net10.0/Amazon.Lambda.RuntimeSupport.dll LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetRoot_Generated::GetRoot",
+      "workingDirectory": "./bin/$(Configuration)/net10.0"
+    },
+    "Aspire_GetItems": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "exec --depsfile ./LambdaAnnotationsDemo.deps.json --runtimeconfig ./LambdaAnnotationsDemo.runtimeconfig.json $(HOME)/.dotnet/tools/.store/amazon.lambda.testtool/0.11.0/amazon.lambda.testtool/0.11.0/content/Amazon.Lambda.RuntimeSupport/net10.0/Amazon.Lambda.RuntimeSupport.dll LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItems_Generated::GetItems",
+      "workingDirectory": "./bin/$(Configuration)/net10.0"
+    },
+    "Aspire_GetItem": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "exec --depsfile ./LambdaAnnotationsDemo.deps.json --runtimeconfig ./LambdaAnnotationsDemo.runtimeconfig.json $(HOME)/.dotnet/tools/.store/amazon.lambda.testtool/0.11.0/amazon.lambda.testtool/0.11.0/content/Amazon.Lambda.RuntimeSupport/net10.0/Amazon.Lambda.RuntimeSupport.dll LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItem_Generated::GetItem",
+      "workingDirectory": "./bin/$(Configuration)/net10.0"
+    },
+    "Aspire_CreateItem": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "exec --depsfile ./LambdaAnnotationsDemo.deps.json --runtimeconfig ./LambdaAnnotationsDemo.runtimeconfig.json $(HOME)/.dotnet/tools/.store/amazon.lambda.testtool/0.11.0/amazon.lambda.testtool/0.11.0/content/Amazon.Lambda.RuntimeSupport/net10.0/Amazon.Lambda.RuntimeSupport.dll LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_CreateItem_Generated::CreateItem",
+      "workingDirectory": "./bin/$(Configuration)/net10.0"
+    }
+  }
+}

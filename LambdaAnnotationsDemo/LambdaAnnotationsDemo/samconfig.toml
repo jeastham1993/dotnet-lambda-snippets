@@ -7,9 +7,15 @@ stack_name = "lambda-annotations-demo"
 resolve_s3 = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
+s3_prefix = "lambda-annotations-demo"
+region = "us-west-1"
+image_repositories = []
 
 [default.build.parameters]
 use_container = false
 
 [default.sync.parameters]
 watch = true
+
+[default.global.parameters]
+region = "us-west-1"

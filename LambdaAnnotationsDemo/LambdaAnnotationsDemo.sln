@@ -2,7 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LambdaAnnotationsDemo", "LambdaAnnotationsDemo.csproj", "{55C3FEC2-531C-3A2C-96DE-9B6A49FAAE44}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LambdaAnnotationsDemo.Aspire", "LambdaAnnotationsDemo.Aspire\LambdaAnnotationsDemo.Aspire.csproj", "{19D25153-71D2-467D-AE23-22F3CE4F843B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LambdaAnnotationsDemo", "LambdaAnnotationsDemo\LambdaAnnotationsDemo.csproj", "{B7FC2C21-C8CD-4D68-9604-33DD3206B430}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,10 +12,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{55C3FEC2-531C-3A2C-96DE-9B6A49FAAE44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55C3FEC2-531C-3A2C-96DE-9B6A49FAAE44}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55C3FEC2-531C-3A2C-96DE-9B6A49FAAE44}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55C3FEC2-531C-3A2C-96DE-9B6A49FAAE44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19D25153-71D2-467D-AE23-22F3CE4F843B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19D25153-71D2-467D-AE23-22F3CE4F843B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19D25153-71D2-467D-AE23-22F3CE4F843B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19D25153-71D2-467D-AE23-22F3CE4F843B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7FC2C21-C8CD-4D68-9604-33DD3206B430}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7FC2C21-C8CD-4D68-9604-33DD3206B430}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7FC2C21-C8CD-4D68-9604-33DD3206B430}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7FC2C21-C8CD-4D68-9604-33DD3206B430}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

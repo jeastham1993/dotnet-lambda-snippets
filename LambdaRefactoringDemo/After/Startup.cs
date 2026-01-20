@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using Amazon.Lambda.Annotations;
 using Amazon.SimpleNotificationService;
 using LambdaRefactoringDemo.After.Repositories;
 using LambdaRefactoringDemo.After.Services;
@@ -7,12 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LambdaRefactoringDemo.After;
 
-public static class Startup
+[LambdaStartup]
+public class Startup
 {
-    public static ServiceProvider ConfigureServices()
+    public void ConfigureServices(IServiceCollection services)
     {
-        var services = new ServiceCollection();
-
         // AWS Services
         services.AddSingleton<IAmazonDynamoDB, AmazonDynamoDBClient>();
         services.AddSingleton<IAmazonSimpleNotificationService, AmazonSimpleNotificationServiceClient>();
@@ -28,7 +28,5 @@ public static class Startup
         services.AddSingleton<IPricingService, PricingService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IOrderService, OrderService>();
-
-        return services.BuildServiceProvider();
     }
 }

@@ -40,7 +40,7 @@ Resources:
   AfterOrderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: LambdaRefactoringDemo::LambdaRefactoringDemo.After.OrderFunction::ProcessOrder
+      Handler: LambdaRefactoringDemo::LambdaRefactoringDemo.After.OrderFunction_ProcessOrder_Generated::ProcessOrder
       CodeUri: .
       Policies:
         - DynamoDBCrudPolicy:

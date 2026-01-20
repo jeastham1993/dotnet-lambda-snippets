@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Amazon.Lambda.Annotations;
+using Amazon.Lambda.Annotations.APIGateway;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using LambdaRefactoringDemo.After.Models;
@@ -9,46 +11,22 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LambdaRefactoringDemo.After;
 
-public class OrderFunction
+public class OrderFunction(IOrderValidator validator, IOrderService orderService)
 {
-    private readonly IOrderValidator _validator;
-    private readonly IOrderService _orderService;
-
-    public OrderFunction() : this(Startup.ConfigureServices()) { }
-
-    public OrderFunction(ServiceProvider serviceProvider)
+    [LambdaFunction]
+    [HttpApi(LambdaHttpMethod.Post, "/after/orders")]
+    public async Task<APIGatewayProxyResponse> ProcessOrder([FromBody] OrderRequest orderRequest, ILambdaContext context)
     {
-        _validator = serviceProvider.GetRequiredService<IOrderValidator>();
-        _orderService = serviceProvider.GetRequiredService<IOrderService>();
-    }
-
-    public async Task<APIGatewayProxyResponse> ProcessOrder(APIGatewayProxyRequest request, ILambdaContext context)
-    {
-        var orderRequest = DeserializeRequest(request.Body);
-
-        var validation = _validator.Validate(orderRequest);
+        var validation = validator.Validate(orderRequest);
         if (!validation.IsValid)
             return BadRequest(validation.ErrorMessage!);
 
-        var result = await _orderService.ProcessOrderAsync(orderRequest!);
+        var result = await orderService.ProcessOrderAsync(orderRequest!);
 
         if (!result.Success)
             return BadRequest(result.ErrorMessage!);
 
         return Created(OrderResponse.FromOrder(result.Order!));
-    }
-
-    private static OrderRequest? DeserializeRequest(string? body)
-    {
-        if (string.IsNullOrEmpty(body)) return null;
-        try
-        {
-            return JsonSerializer.Deserialize<OrderRequest>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
-        catch { return null; }
     }
 
     private static APIGatewayProxyResponse BadRequest(string message) => new()

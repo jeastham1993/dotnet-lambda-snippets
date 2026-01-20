@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Refactoring Demo - Before and After
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: dotnet8
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        ORDERS_TABLE: !Ref OrdersTable
+        INVENTORY_TABLE: !Ref InventoryTable
+        NOTIFICATION_TOPIC_ARN: !Ref NotificationTopic
+
+Resources:
+  # The "Before" monolithic function
+  BeforeOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaRefactoringDemo::LambdaRefactoringDemo.Before.OrderFunction::ProcessOrder
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InventoryTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Events:
+        ProcessOrder:
+          Type: HttpApi
+          Properties:
+            Path: /before/orders
+            Method: POST
+
+  # The "After" clean function
+  AfterOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaRefactoringDemo::LambdaRefactoringDemo.After.OrderFunction::ProcessOrder
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InventoryTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Events:
+        ProcessOrder:
+          Type: HttpApi
+          Properties:
+            Path: /after/orders
+            Method: POST
+
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Orders
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: OrderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: OrderId
+          KeyType: HASH
+
+  InventoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Inventory
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ProductId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ProductId
+          KeyType: HASH
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: OrderNotifications
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  BeforeEndpoint:
+    Description: Before (monolithic) endpoint
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/before/orders"
+  AfterEndpoint:
+    Description: After (clean) endpoint
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/after/orders"

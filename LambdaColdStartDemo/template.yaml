@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Cold Start Demo - Progressive Optimization Steps
+
+Globals:
+  Function:
+    Timeout: 30
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ProductsTable
+        SECRET_NAME: my-api-key
+
+Resources:
+  # ============================================
+  # STEP 0: BASELINE - The Disaster
+  # 128MB memory, all init in handler
+  # Expected cold start: ~3 seconds
+  # ============================================
+  Step0BaselineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ColdStartDemo-Step0-Baseline
+      Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step0_Baseline.Function::Handler
+      Runtime: dotnet8
+      CodeUri: .
+      MemorySize: 128  # LOW MEMORY = LOW CPU = SLOW
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ProductsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:my-api-key*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            Path: /step0
+            Method: GET
+
+  # ============================================
+  # STEP 1: MEMORY OPTIMIZED
+  # 1024MB memory, same code as Step 0
+  # Expected cold start: ~1.5 seconds
+  # ============================================
+  Step1MemoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ColdStartDemo-Step1-Memory
+      Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step1_Memory.Function::Handler
+      Runtime: dotnet8
+      CodeUri: .
+      MemorySize: 1024  # MORE MEMORY = MORE CPU = FASTER
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ProductsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:my-api-key*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            Path: /step1
+            Method: GET
+
+  # ============================================
+  # STEP 2: INITIALIZATION OPTIMIZED
+  # 1024MB memory, resources in constructor
+  # Expected cold start: ~1 second
+  # ============================================
+  Step2InitFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ColdStartDemo-Step2-Initialization
+      Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step2_Initialization.Function::Handler
+      Runtime: dotnet8
+      CodeUri: .
+      MemorySize: 1024
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ProductsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:my-api-key*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            Path: /step2
+            Method: GET
+
+  # ============================================
+  # STEP 3: NATIVE AOT WITH LAMBDA ANNOTATIONS
+  # 1024MB memory, proper init, Native AOT
+  # Using Lambda Annotations with GenerateMain = true
+  # Expected cold start: <300ms
+  # ============================================
+  Step3AotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ColdStartDemo-Step3-NativeAOT
+      Handler: bootstrap  # Lambda Annotations generates this
+      Runtime: provided.al2023  # Custom runtime for AOT
+      CodeUri: ./Step3_NativeAot/
+      MemorySize: 1024
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ProductsTable
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:my-api-key*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            Path: /step3
+            Method: GET
+    Metadata:
+      BuildMethod: dotnet8-aot
+
+  # Supporting infrastructure
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Products
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ProductId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ProductId
+          KeyType: HASH
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  Step0Endpoint:
+    Description: "Step 0 - Baseline (128MB, init in handler)"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/step0"
+  Step1Endpoint:
+    Description: "Step 1 - Memory Optimized (1024MB)"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/step1"
+  Step2Endpoint:
+    Description: "Step 2 - Initialization Optimized"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/step2"
+  Step3Endpoint:
+    Description: "Step 3 - Native AOT (<300ms)"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/step3"

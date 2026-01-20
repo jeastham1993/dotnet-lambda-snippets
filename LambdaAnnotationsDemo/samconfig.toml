@@ -1,0 +1,15 @@
+# SAM CLI configuration file
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "lambda-annotations-demo"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+
+[default.build.parameters]
+use_container = false
+
+[default.sync.parameters]
+watch = true

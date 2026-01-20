@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Annotations Demo - Complete .NET API on Lambda
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: dotnet10
+    Architectures:
+      - x86_64
+
+Resources:
+  GetRootFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetRoot_Generated::GetRoot
+      CodeUri: .
+      Events:
+        RootGet:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+
+  GetItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItems_Generated::GetItems
+      CodeUri: .
+      Events:
+        ItemsGet:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: GET
+
+  GetItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItem_Generated::GetItem
+      CodeUri: .
+      Events:
+        ItemGet:
+          Type: HttpApi
+          Properties:
+            Path: /items/{id}
+            Method: GET
+
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_CreateItem_Generated::CreateItem
+      CodeUri: .
+      Events:
+        ItemPost:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: POST
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"

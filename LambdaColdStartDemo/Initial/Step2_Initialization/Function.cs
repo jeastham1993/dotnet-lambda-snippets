@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using Amazon.Lambda.Annotations;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.SecretsManager;
@@ -23,16 +24,13 @@ namespace LambdaColdStartDemo.Step2_Initialization;
 ///
 /// Move expensive initialization to constructor = faster warm invocations
 /// </summary>
-public class Function(AmazonDynamoDBClient dynamoDbClient, HttpClient httpClient, AppConfig appConfig)
+public class Function(IAmazonDynamoDB dynamoDbClient, HttpClient httpClient, AppConfig appConfig)
 {
-    // GOOD: Clients created once, reused across invocations
-    private readonly HttpClient _httpClient = httpClient;
-    private readonly AppConfig _appConfig = appConfig;
-
     /// <summary>
     /// Handler runs EVERY invocation.
     /// Now it's thin - just business logic, no initialization.
     /// </summary>
+    [LambdaFunction]
     public async Task<APIGatewayProxyResponse> Handler(APIGatewayProxyRequest request, ILambdaContext context)
     {
         context.Logger.LogInformation("Handler starting - resources already initialized!");

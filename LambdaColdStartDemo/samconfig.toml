@@ -4,9 +4,9 @@ version = 0.1
 stack_name = "lambda-cold-start"
 resolve_s3 = true
 s3_prefix = "lambda-cold-start"
-region = "us-west-1"
+region = "eu-west-1"
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
 
 [default.global.parameters]
-region = "us-west-1"
+region = "eu-west-1"

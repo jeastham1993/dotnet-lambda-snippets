@@ -72,7 +72,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: ColdStartDemo-Step2-Initialization
-      Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step2_Initialization.Function::Handler
+      Handler: LambdaColdStartDemo::LambdaColdStartDemo.Step2_Initialization.Function_Handler_Generated::Handler
       Runtime: dotnet10
       CodeUri: ./Initial/
       MemorySize: 1024

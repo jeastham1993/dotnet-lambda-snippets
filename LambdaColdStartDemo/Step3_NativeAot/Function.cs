@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.Annotations;
 using Amazon.Lambda.Annotations.APIGateway;
+using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using LambdaColdStartDemo.NativeAot;
@@ -87,6 +88,8 @@ public class ApiResponse
 /// SourceGeneratorLambdaJsonSerializer in the assembly attribute.
 /// </summary>
 [JsonSerializable(typeof(ApiResponse))]
+[JsonSerializable(typeof(APIGatewayHttpApiV2ProxyRequest))]
+[JsonSerializable(typeof(APIGatewayHttpApiV2ProxyResponse))]
 public partial class ApiSerializerContext : JsonSerializerContext
 {
 }

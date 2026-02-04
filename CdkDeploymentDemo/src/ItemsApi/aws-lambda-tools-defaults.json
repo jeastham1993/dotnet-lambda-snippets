@@ -1,0 +1,13 @@
+{
+  "Information": [
+    "This file provides default values for the deployment wizard inside Visual Studio and the AWS Lambda CLI.",
+    "To learn more about the Lambda CLI use the command: dotnet lambda help"
+  ],
+  "profile": "",
+  "region": "",
+  "configuration": "Release",
+  "function-runtime": "dotnet8",
+  "function-memory-size": 512,
+  "function-timeout": 30,
+  "function-handler": "ItemsApi"
+}

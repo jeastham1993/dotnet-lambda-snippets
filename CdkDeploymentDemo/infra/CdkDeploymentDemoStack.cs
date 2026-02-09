@@ -20,52 +20,6 @@ public class CdkDeploymentDemoStack : Stack
             RemovalPolicy = RemovalPolicy.DESTROY
         });
 
-        // Lambda Function - CDK builds and packages automatically
-        var getAllItemsFunction = new DotNetFunction(this, "ItemsFunction", new DotNetFunctionProps
-        {
-            ProjectDir = "../src/ItemsApi",
-            Handler = "ItemsApi::ItemsApi.Functions_GetAllItems_Generated::GetAllItems",
-            Runtime = Runtime.DOTNET_10,
-            MemorySize = 512,
-            Timeout = Duration.Seconds(30),
-            Environment = new Dictionary<string, string>
-            {
-                { "TABLE_NAME", table.TableName }
-            }
-        });
-        // Grant Lambda permissions to DynamoDB - one line!
-        table.GrantReadWriteData(getAllItemsFunction);
-        
-        var getItemFunction = new DotNetFunction(this, "GetItemFunction", new DotNetFunctionProps
-        {
-            ProjectDir = "../src/ItemsApi",
-            Handler = "ItemsApi::ItemsApi.Functions_GetItem_Generated::GetItem",
-            Runtime = Runtime.DOTNET_10,
-            MemorySize = 512,
-            Timeout = Duration.Seconds(30),
-            Environment = new Dictionary<string, string>
-            {
-                { "TABLE_NAME", table.TableName }
-            }
-        });
-        // Grant Lambda permissions to DynamoDB - one line!
-        table.GrantReadWriteData(getItemFunction);
-        
-        var createItemFunction = new DotNetFunction(this, "CreateItemFunction", new DotNetFunctionProps
-        {
-            ProjectDir = "../src/ItemsApi",
-            Handler = "ItemsApi::ItemsApi.Functions_CreateItem_Generated::CreateItem",
-            Runtime = Runtime.DOTNET_10,
-            MemorySize = 512,
-            Timeout = Duration.Seconds(30),
-            Environment = new Dictionary<string, string>
-            {
-                { "TABLE_NAME", table.TableName }
-            }
-        });
-        // Grant Lambda permissions to DynamoDB - one line!
-        table.GrantReadWriteData(createItemFunction);
-
         // API Gateway HTTP API
         var api = new CfnApi(this, "ItemsApi", new CfnApiProps
         {
@@ -80,65 +34,63 @@ public class CdkDeploymentDemoStack : Stack
             StageName = "$default",
             AutoDeploy = true
         });
-
-        // Lambda integration
-        var getItemsIntegration = new CfnIntegration(this, "GetItemsLambdaIntegration", new CfnIntegrationProps
+        
+        // Lambda Function - CDK builds and packages automatically
+        var getAllItemsFunction = new ApiDotnetFunction(this, "ItemsFunction", new ApiDotnetFunctionProps()
         {
-            ApiId = api.Ref,
-            IntegrationType = "AWS_PROXY",
-            IntegrationUri = getAllItemsFunction.FunctionArn,
-            PayloadFormatVersion = "2.0"
+            ProjectDir = "../src/ItemsApi",
+            Handler = "ItemsApi::ItemsApi.Functions_GetAllItems_Generated::GetAllItems",
+            Runtime = Runtime.DOTNET_10,
+            MemorySize = 512,
+            Timeout = Duration.Seconds(30),
+            Environment = new Dictionary<string, string>
+            {
+                { "TABLE_NAME", table.TableName }
+            },
+            Api = api,
+            RouteKey = "GET /items",
+            Region = this.Region,
+            Account = this.Account
         });
-        // Grant API Gateway permission to invoke Lambda
-        getAllItemsFunction.AddPermission("ApiGatewayInvoke", new Permission
+        table.GrantReadData(getAllItemsFunction);
+        
+        var getItemFunction = new ApiDotnetFunction(this, "GetItemFunction", new ApiDotnetFunctionProps()
         {
-            Principal = new Amazon.CDK.AWS.IAM.ServicePrincipal("apigateway.amazonaws.com"),
-            SourceArn = $"arn:aws:execute-api:{this.Region}:{this.Account}:{api.Ref}/*"
-        });
-
-        // Lambda integration
-        var getItemIntegration = new CfnIntegration(this, "GetItemLambdaIntegration", new CfnIntegrationProps
-        {
-            ApiId = api.Ref,
-            IntegrationType = "AWS_PROXY",
-            IntegrationUri = getItemFunction.FunctionArn,
-            PayloadFormatVersion = "2.0"
-        });
-        // Grant API Gateway permission to invoke Lambda
-        getItemFunction.AddPermission("ApiGatewayInvoke", new Permission
-        {
-            Principal = new Amazon.CDK.AWS.IAM.ServicePrincipal("apigateway.amazonaws.com"),
-            SourceArn = $"arn:aws:execute-api:{this.Region}:{this.Account}:{api.Ref}/*"
-        });
-
-        // Lambda integration
-        var createItemIntegration = new CfnIntegration(this, "CreateItemLambdaIntegration", new CfnIntegrationProps
-        {
-            ApiId = api.Ref,
-            IntegrationType = "AWS_PROXY",
-            IntegrationUri = createItemFunction.FunctionArn,
-            PayloadFormatVersion = "2.0"
-        });
-        // Grant API Gateway permission to invoke Lambda
-        createItemFunction.AddPermission("ApiGatewayInvoke", new Permission
-        {
-            Principal = new Amazon.CDK.AWS.IAM.ServicePrincipal("apigateway.amazonaws.com"),
-            SourceArn = $"arn:aws:execute-api:{this.Region}:{this.Account}:{api.Ref}/*"
-        });
-
-        new CfnRoute(this, "PostItemsRoute", new CfnRouteProps
-        {
-            ApiId = api.Ref,
-            RouteKey = "POST /items",
-            Target = $"integrations/{createItemIntegration.Ref}"
-        });
-
-        new CfnRoute(this, "GetItemByIdRoute", new CfnRouteProps
-        {
-            ApiId = api.Ref,
+            ProjectDir = "../src/ItemsApi",
+            Handler = "ItemsApi::ItemsApi.Functions_GetItem_Generated::GetItem",
+            Runtime = Runtime.DOTNET_10,
+            MemorySize = 512,
+            Timeout = Duration.Seconds(30),
+            Environment = new Dictionary<string, string>
+            {
+                { "TABLE_NAME", table.TableName }
+            },
+            Api = api,
             RouteKey = "GET /items/{id}",
-            Target = $"integrations/{getItemIntegration.Ref}"
+            Region = this.Region,
+            Account = this.Account
         });
+        // Grant Lambda permissions to DynamoDB - one line!
+        table.GrantReadData(getItemFunction);
+        
+        var createItemFunction = new ApiDotnetFunction(this, "GetItemFunction", new ApiDotnetFunctionProps()
+        {
+            ProjectDir = "../src/ItemsApi",
+            Handler = "ItemsApi::ItemsApi.Functions_CreateItem_Generated::CreateItem",
+            Runtime = Runtime.DOTNET_10,
+            MemorySize = 512,
+            Timeout = Duration.Seconds(30),
+            Environment = new Dictionary<string, string>
+            {
+                { "TABLE_NAME", table.TableName }
+            },
+            Api = api,
+            RouteKey = "POST /items",
+            Region = this.Region,
+            Account = this.Account
+        });
+        // Grant Lambda permissions to DynamoDB - one line!
+        table.GrantReadWriteData(createItemFunction);
 
         // Output the API endpoint
         _ = new CfnOutput(this, "ApiEndpoint", new CfnOutputProps
@@ -148,23 +100,3 @@ public class CdkDeploymentDemoStack : Stack
         });
     }
 }
-        
-// // Lambda Function - CDK builds and packages automatically
-// var getAllItemsFunction = new ApiDotnetFunction(this, "ItemsFunction", new ApiDotnetFunctionProps()
-// {
-//     ProjectDir = "../src/ItemsApi",
-//     Handler = "ItemsApi::ItemsApi.Functions_GetAllItems_Generated::GetAllItems",
-//     Runtime = Runtime.DOTNET_10,
-//     MemorySize = 512,
-//     Timeout = Duration.Seconds(30),
-//     Environment = new Dictionary<string, string>
-//     {
-//         { "TABLE_NAME", table.TableName }
-//     },
-//     Api = api,
-//     RouteKey = "GET /items",
-//     Region = this.Region,
-//     Account = this.Account
-// });
-// // Grant Lambda permissions to DynamoDB - one line!
-// table.GrantReadWriteData(getAllItemsFunction);

@@ -1,0 +1,13 @@
+{
+  "app": "dotnet run --project src/SqsEventBridgeCdk/SqsEventBridgeCdk.csproj",
+  "watch": {
+    "include": ["**"],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/GlobalSuppressions.cs",
+      "**/bin/**",
+      "**/obj/**"
+    ]
+  }
+}

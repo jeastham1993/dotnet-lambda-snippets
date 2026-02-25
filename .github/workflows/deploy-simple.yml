@@ -44,4 +44,4 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name ProductApi \
-            --zip-file fileb://productapi.zip
+            --zip-file fileb://LambdaDeploymentDemo/productapi.zip

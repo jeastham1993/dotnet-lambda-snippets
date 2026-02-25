@@ -1,0 +1,63 @@
+# Artillery load test for the Order API Lambda.
+#
+# Usage:
+#   API_GATEWAY_URL=https://abc123.execute-api.eu-west-1.amazonaws.com npx artillery run artillery.yml
+#
+# What to watch in CloudWatch during the run:
+#   - Duration (p50, p95, p99) — are you seeing cold start spikes?
+#   - Throttles              — are you hitting the concurrency limit?
+#   - Errors                 — any downstream failures under load?
+#   - IteratorAge (if SQS)   — is the queue backing up?
+
+config:
+  target: "{{ $env.API_GATEWAY_URL }}"
+  phases:
+    - name: Warm up
+      duration: 30
+      arrivalRate: 2
+      rampTo: 10
+    - name: Sustained load
+      duration: 120
+      arrivalRate: 25
+    - name: Peak load
+      duration: 60
+      arrivalRate: 100
+  defaults:
+    headers:
+      Content-Type: application/json
+  # Fail the run if error rate exceeds 1% or p99 exceeds 3000ms
+  ensure:
+    p99: 3000
+    maxErrorRate: 1
+
+scenarios:
+  - name: Place and retrieve an order
+    weight: 80
+    flow:
+      - post:
+          url: /orders
+          json:
+            customerId: "load-test-{{ $randomString() }}"
+            items:
+              - productId: "PRODUCT-001"
+                quantity: 1
+          capture:
+            - json: "$.orderId"
+              as: orderId
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/orders/{{ orderId }}"
+          expect:
+            - statusCode: 200
+
+  - name: Invalid requests (baseline error rate check)
+    weight: 20
+    flow:
+      - post:
+          url: /orders
+          json:
+            customerId: ""
+            items: []
+          expect:
+            - statusCode: 400

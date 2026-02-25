@@ -1,0 +1,275 @@
+# Production-grade Lambda deployment pipeline.
+# Four stages that make a bad deployment impossible to reach production:
+#
+#   1. build          — compile and package the Lambda zip
+#   2. publish        — upload new code, publish an immutable version, record
+#                       the previous version number for rollback
+#   3. pre-deploy     — invoke the new version directly with a synthetic test
+#                       event BEFORE any traffic moves; catches missing env vars,
+#                       broken cold starts, and obvious regressions
+#   4. canary         — shift 10% of prod traffic to the new version, poll the
+#                       CloudWatch error-rate alarm for 5 minutes, then either
+#                       promote to 100% or roll the alias back automatically
+#
+# Optional: uncomment the manual-approval job to gate full promotion behind a
+# human decision (useful for large releases or Friday afternoons).
+
+name: Deploy (Production-Grade)
+
+on:
+  push:
+    branches: [main]
+
+env:
+  FUNCTION_NAME: ProductApi
+  ALIAS_NAME: prod
+  ALARM_NAME: ProductApi-prod-ErrorRate
+  AWS_REGION: us-east-1
+  DOTNET_VERSION: '8.0'
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # Stage 1 — Build and package
+  # ─────────────────────────────────────────────────────────
+  build:
+    name: Build and package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Lambda tools
+        run: dotnet tool install -g Amazon.Lambda.Tools
+
+      - name: Package
+        working-directory: src/ProductApi
+        run: dotnet lambda package --configuration Release --output-package ../../productapi.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package
+          path: productapi.zip
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────
+  # Stage 2 — Publish an immutable version
+  # ─────────────────────────────────────────────────────────
+  publish:
+    name: Publish version
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      new_version: ${{ steps.publish.outputs.version }}
+      previous_version: ${{ steps.previous.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package
+
+      # Record the version the alias is currently pointing at so we can
+      # restore it if the canary stage needs to roll back.
+      - name: Get current alias version
+        id: previous
+        run: |
+          VERSION=$(aws lambda get-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$ALIAS_NAME" \
+            --query 'FunctionVersion' \
+            --output text)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Previous version: $VERSION"
+
+      - name: Update function code
+        run: |
+          aws lambda update-function-code \
+            --function-name "$FUNCTION_NAME" \
+            --zip-file fileb://productapi.zip \
+            --no-cli-pager
+
+      - name: Wait for update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name "$FUNCTION_NAME"
+
+      # Publish an immutable, numbered snapshot of the code and configuration.
+      # Every deployment creates a new version — no more "what was running before?"
+      - name: Publish version
+        id: publish
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name "$FUNCTION_NAME" \
+            --description "Deployed from $GITHUB_SHA" \
+            --query 'Version' \
+            --output text)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "New version: $VERSION"
+
+  # ─────────────────────────────────────────────────────────
+  # Stage 3 — Pre-deployment validation
+  # Invokes the new version directly before any traffic moves.
+  # A missing env var or broken cold start fails here — no user
+  # ever touches the broken code.
+  # ─────────────────────────────────────────────────────────
+  pre-deployment-check:
+    name: Pre-deployment validation
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      NEW_VERSION: ${{ needs.publish.outputs.new_version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Invoke new version with synthetic test event
+        id: invoke
+        run: |
+          aws lambda invoke \
+            --function-name "${FUNCTION_NAME}:${NEW_VERSION}" \
+            --payload file://test-events/get-products.json \
+            --cli-binary-format raw-in-base64-out \
+            response.json
+
+          echo "--- Lambda response ---"
+          cat response.json
+
+      # Assert the response is a 200 — not a 500 caused by a missing env var,
+      # broken import, or cold-start crash.
+      - name: Assert response is healthy
+        run: |
+          STATUS=$(jq -r '.statusCode' response.json)
+          if [ "$STATUS" != "200" ]; then
+            echo "Pre-deployment check FAILED: expected 200, got $STATUS"
+            echo "Response body:"
+            jq -r '.body' response.json
+            exit 1
+          fi
+          echo "Pre-deployment check passed (status $STATUS)"
+
+  # ─────────────────────────────────────────────────────────
+  # Stage 4 — Canary: shift traffic, validate, promote or rollback
+  # ─────────────────────────────────────────────────────────
+  canary:
+    name: Canary deployment
+    needs: [publish, pre-deployment-check]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      NEW_VERSION: ${{ needs.publish.outputs.new_version }}
+      PREVIOUS_VERSION: ${{ needs.publish.outputs.previous_version }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Shift 10% of production traffic to the new version.
+      # The other 90% continues hitting the version that was working minutes ago.
+      - name: Shift 10% traffic to new version (canary start)
+        run: |
+          echo "Shifting 10% of traffic to version $NEW_VERSION (canary)"
+          aws lambda update-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$ALIAS_NAME" \
+            --routing-config "AdditionalVersionWeights={\"$NEW_VERSION\":0.1}"
+
+      # Poll the CloudWatch alarm every 30 seconds for up to 5 minutes.
+      # If the alarm fires, roll back immediately without waiting.
+      - name: Wait and watch the alarm
+        id: watch
+        run: |
+          echo "Monitoring alarm: $ALARM_NAME"
+          echo "Polling every 30 seconds for up to 5 minutes..."
+
+          for i in $(seq 1 10); do
+            sleep 30
+
+            STATE=$(aws cloudwatch describe-alarms \
+              --alarm-names "$ALARM_NAME" \
+              --query 'MetricAlarms[0].StateValue' \
+              --output text)
+
+            echo "Poll $i/10 — alarm state: $STATE"
+
+            if [ "$STATE" = "ALARM" ]; then
+              echo "Alarm fired on poll $i — rolling back to version $PREVIOUS_VERSION"
+
+              aws lambda update-alias \
+                --function-name "$FUNCTION_NAME" \
+                --name "$ALIAS_NAME" \
+                --function-version "$PREVIOUS_VERSION" \
+                --routing-config '{}'
+
+              echo "Rollback complete. Alias restored to version $PREVIOUS_VERSION."
+              echo "rolled_back=true" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+          done
+
+          echo "Alarm stayed healthy for 5 minutes — promoting to 100%"
+          echo "rolled_back=false" >> "$GITHUB_OUTPUT"
+
+      # Alarm stayed green — promote the new version to 100% of traffic.
+      - name: Promote to 100%
+        if: success()
+        run: |
+          echo "Promoting version $NEW_VERSION to 100% of prod traffic"
+          aws lambda update-alias \
+            --function-name "$FUNCTION_NAME" \
+            --name "$ALIAS_NAME" \
+            --function-version "$NEW_VERSION" \
+            --routing-config '{}'
+
+          echo "Deployment complete. Version $NEW_VERSION is now serving 100% of traffic."
+
+  # ─────────────────────────────────────────────────────────
+  # Optional: manual approval gate
+  # Uncomment this job and add `needs: manual-approval` to the
+  # canary job if you want a human to approve full promotion.
+  # Configure the 'production' environment in GitHub repo settings
+  # with a required reviewer to enforce the approval gate.
+  # ─────────────────────────────────────────────────────────
+  #
+  # manual-approval:
+  #   name: Approve full promotion
+  #   needs: [publish, pre-deployment-check]
+  #   runs-on: ubuntu-latest
+  #   environment: production   # <-- add required reviewers here in GitHub settings
+  #   steps:
+  #     - name: Approved
+  #       run: echo "Deployment approved — proceeding to canary"

@@ -1,0 +1,27 @@
+{
+  "version": "2.0",
+  "routeKey": "GET /products",
+  "rawPath": "/products",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json",
+    "user-agent": "github-actions-pre-deployment-check"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "apiId": "pre-deployment-check",
+    "http": {
+      "method": "GET",
+      "path": "/products",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "github-actions-pre-deployment-check"
+    },
+    "requestId": "pre-deployment-check",
+    "routeKey": "GET /products",
+    "stage": "$default",
+    "time": "01/Jan/2025:00:00:00 +0000",
+    "timeEpoch": 1735689600000
+  },
+  "isBase64Encoded": false
+}

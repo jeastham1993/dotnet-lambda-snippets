@@ -1,0 +1,48 @@
+# The workflow most teams ship.
+# Build, package, deploy — straight to production with no safety net.
+# One bad commit takes down production immediately.
+#
+# This is shown in the OPENING of the video as the "wrong" way.
+# See deploy-production.yml for the version that makes this impossible.
+
+name: Deploy (Simple — No Safety Net)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install Lambda tools
+        run: dotnet tool install -g Amazon.Lambda.Tools
+
+      - name: Package
+        working-directory: src/ProductApi
+        run: dotnet lambda package --configuration Release --output-package ../../productapi.zip
+
+      # Deploy directly to the live function — no version, no alias, no canary.
+      # If this commit is broken, every single user hits the broken code immediately.
+      - name: Deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name ProductApi \
+            --zip-file fileb://productapi.zip

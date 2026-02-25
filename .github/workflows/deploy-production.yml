@@ -17,8 +17,7 @@
 name: Deploy (Production-Grade)
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:  # Allow manual trigger from GitHub UI for testing and emergencies
 
 env:
   FUNCTION_NAME: ProductApi

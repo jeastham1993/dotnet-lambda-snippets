@@ -36,7 +36,7 @@ jobs:
         run: dotnet tool install -g Amazon.Lambda.Tools
 
       - name: Package
-        working-directory: src/ProductApi
+        working-directory: LambdaDeploymentDemo/src/ProductApi
         run: dotnet lambda package --configuration Release --output-package ../../productapi.zip
 
       # Deploy directly to the live function — no version, no alias, no canary.

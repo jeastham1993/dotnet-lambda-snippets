@@ -127,7 +127,7 @@ dotnet restore
 # Deploy a developer stack
 dotnet cdk deploy -c suffix=yourname
 
-# Deploy production
+# Deploy production`
 dotnet cdk deploy -c suffix=prod
 ```
 

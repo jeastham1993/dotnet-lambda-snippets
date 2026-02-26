@@ -1,0 +1,64 @@
+# CDK-native Lambda deployment pipeline.
+#
+# This is the CDK equivalent of deploy-production.yml. Every safety mechanism
+# that the manual pipeline implemented in bash is now declared in the CDK stack
+# and executed natively by AWS CodeDeploy:
+#
+#   Manual pipeline (deploy-production.yml)   CDK pipeline (this file)
+#   ──────────────────────────────────────    ──────────────────────────────
+#   Stage 1: build + package                  cdk deploy (builds internally)
+#   Stage 2: publish-version (SDK call)       CDK creates version on change
+#   Stage 3: pre-deployment-check (bash)      PreTrafficHook Lambda
+#   Stage 4: canary + alarm polling (bash)    CodeDeploy CANARY_10PERCENT_5MINUTES
+#   Manual rollback logic                     CodeDeploy AutoRollback
+#
+# The entire four-job workflow collapses to a single `cdk deploy` command.
+# CodeDeploy blocks the CloudFormation stack update until the canary bake
+# period completes, so this job does not return until deployment is safe.
+
+name: Deploy (CDK — CodeDeploy Canary)
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  DOTNET_VERSION: '8.0'
+  NODE_VERSION: '20'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: CDK deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # cdk deploy does not return until CodeDeploy finishes the canary bake.
+      # If the pre-traffic hook fails or the error alarm fires during the 5-minute
+      # bake window, CodeDeploy rolls back automatically and CloudFormation marks
+      # the stack update as failed -- which fails this job with a non-zero exit code.
+      - name: Deploy via CDK
+        working-directory: LambdaDeploymentDemo/cdk
+        run: cdk deploy --require-approval never

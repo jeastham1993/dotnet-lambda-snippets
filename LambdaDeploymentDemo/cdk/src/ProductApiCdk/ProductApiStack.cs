@@ -120,7 +120,7 @@ public class ProductApiStack : Stack
         //   5. Full promotion          (100% if bake period passes cleanly)
         //
         // The GitHub Actions workflow shrinks to a single `cdk deploy` call.
-        _ = new LambdaDeploymentGroup(this, "ProductApiDeploymentGroup", new LambdaDeploymentGroupProps
+        var deploymentGroup = new LambdaDeploymentGroup(this, "ProductApiDeploymentGroup", new LambdaDeploymentGroupProps
         {
             Alias = prodAlias,
             DeploymentConfig = LambdaDeploymentConfig.CANARY_10PERCENT_5MINUTES,
@@ -134,6 +134,7 @@ public class ProductApiStack : Stack
                 FailedDeployment = true,
             },
         });
+        deploymentGroup.Role.AddManagedPolicy(ManagedPolicy.FromAwsManagedPolicyName("service-role/AWSCodeDeployRoleForLambda"));
 
         // --- Stack outputs ---
         new CfnOutput(this, "FunctionName", new CfnOutputProps

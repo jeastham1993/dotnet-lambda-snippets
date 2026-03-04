@@ -42,7 +42,7 @@ public class ProductApiStack : Stack
                 // Removing this variable and redeploying is the "bad commit"
                 // scenario shown in the video -- the pre-traffic hook catches
                 // the missing variable before any traffic shifts.
-                ["PRODUCTS_TABLE_NAME"] = table.TableName,
+                // ["PRODUCTS_TABLE_NAME"] = table.TableName,
             },
         });
 

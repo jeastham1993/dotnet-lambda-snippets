@@ -120,6 +120,15 @@ public class ProductApiStack : Stack
         //   5. Full promotion          (100% if bake period passes cleanly)
         //
         // The GitHub Actions workflow shrinks to a single `cdk deploy` call.
+        // Create the role first to ensure the permissions are correct before the DeploymentGroup is created
+        var deploymentRole = new Role(this, "CodeDeployServiceRole", new RoleProps
+        {
+            AssumedBy = new ServicePrincipal("codedeploy.amazonaws.com"),
+            ManagedPolicies = new[]
+            {
+                ManagedPolicy.FromAwsManagedPolicyName("service-role/AWSCodeDeployRoleForLambda")
+            },
+        });
         var deploymentGroup = new LambdaDeploymentGroup(this, "ProductApiDeploymentGroup", new LambdaDeploymentGroupProps
         {
             Alias = prodAlias,
@@ -133,8 +142,8 @@ public class ProductApiStack : Stack
                 // Roll back if any part of the deployment fails (e.g. the pre-traffic hook).
                 FailedDeployment = true,
             },
+            Role = deploymentRole
         });
-        deploymentGroup.Role.AddManagedPolicy(ManagedPolicy.FromAwsManagedPolicyName("service-role/AWSCodeDeployRoleForLambda"));
 
         // --- Stack outputs ---
         new CfnOutput(this, "FunctionName", new CfnOutputProps

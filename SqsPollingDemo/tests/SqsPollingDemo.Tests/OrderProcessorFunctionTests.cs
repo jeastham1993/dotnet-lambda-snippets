@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Amazon.Lambda.SQSEvents;
 using Amazon.Lambda.TestUtilities;
-using SqsPollingDemo.Functions;
 using SqsPollingDemo.Models;
 using Xunit;
 

@@ -22,6 +22,7 @@ public class OrderProcessingWorker(
         {
             try
             {
+                logger.LogInformation("Starting long poll. Waiting for messages...");
                 // Poll the queue — your code is always running, always asking "is there work?"
                 var response = await sqsClient.ReceiveMessageAsync(new ReceiveMessageRequest
                 {
@@ -34,7 +35,7 @@ public class OrderProcessingWorker(
                 if (response.Messages is not { Count: > 0 })
                 {
                     // No work. Still running. Still costing money.
-                    logger.LogDebug("No messages. Waiting...");
+                    logger.LogInformation("No messages. Waiting...");
                     await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                     continue;
                 }

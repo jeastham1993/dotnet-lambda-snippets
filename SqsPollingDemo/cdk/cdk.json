@@ -1,0 +1,15 @@
+{
+  "app": "dotnet run --project src/SqsPollingCdk/SqsPollingCdk.csproj",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/GlobalSuppressions.cs",
+      "**/bin/**",
+      "**/obj/**"
+    ]
+  }
+}

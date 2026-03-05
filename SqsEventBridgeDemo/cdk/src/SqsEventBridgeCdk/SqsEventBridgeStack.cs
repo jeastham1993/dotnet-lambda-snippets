@@ -1,11 +1,12 @@
 using Amazon.CDK;
 using Amazon.CDK.AWS.Events;
 using Amazon.CDK.AWS.Events.Targets;
-using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.Lambda.DotNet;
 using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.SQS;
 using Constructs;
+using EventBus = Amazon.CDK.AWS.Events.EventBus;
+using EventBusProps = Amazon.CDK.AWS.Events.EventBusProps;
 
 namespace SqsEventBridgeCdk;
 
@@ -111,7 +112,6 @@ public class SqsEventBridgeStack : Stack
         // Shows fan-out: one order.placed event triggers three independent
         // consumers simultaneously — none of them know about each other.
         // ---------------------------------------------------------------
-
         var orderEventBus = new EventBus(this, "OrderEventBus", new EventBusProps
         {
             EventBusName = "order-events"

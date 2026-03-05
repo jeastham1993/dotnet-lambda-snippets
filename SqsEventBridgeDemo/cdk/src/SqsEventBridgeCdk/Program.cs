@@ -1,15 +1,18 @@
 using Amazon.CDK;
-using SqsEventBridgeCdk;
 
-var app = new App();
+namespace SqsEventBridgeCdk;
 
-new SqsEventBridgeStack(app, "SqsEventBridgeStack", new StackProps
+class Program
 {
-    Env = new Amazon.CDK.Environment
+    static void Main(string[] args)
     {
-        Account = System.Environment.GetEnvironmentVariable("CDK_DEFAULT_ACCOUNT"),
-        Region = System.Environment.GetEnvironmentVariable("CDK_DEFAULT_REGION")
-    }
-});
+        var app = new App();
 
-app.Synth();
+        new SqsEventBridgeStack(app, "CdkDeploymentDemoStack", new StackProps
+        {
+            Description = "Items API - Lambda, API Gateway, and DynamoDB deployed with CDK"
+        });
+
+        app.Synth();
+    }
+}

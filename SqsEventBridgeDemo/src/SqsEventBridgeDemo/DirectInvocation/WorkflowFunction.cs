@@ -5,6 +5,7 @@ using Amazon.Lambda.Annotations.APIGateway;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Model;
 using SqsEventBridgeDemo.Models;
+using Environment = System.Environment;
 
 namespace SqsEventBridgeDemo.DirectInvocation;
 

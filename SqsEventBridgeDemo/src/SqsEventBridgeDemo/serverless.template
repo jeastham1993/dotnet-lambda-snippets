@@ -1,0 +1,197 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Description": "This template is partially managed by Amazon.Lambda.Annotations (v1.9.0.0).",
+  "Resources": {
+    "SqsEventBridgeDemoDirectInvocationPaymentFunctionProcessPaymentGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations"
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.DirectInvocation.PaymentFunction_ProcessPayment_Generated::ProcessPayment"
+      }
+    },
+    "SqsEventBridgeDemoDirectInvocationWorkflowFunctionPlaceOrderGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations",
+        "SyncedEvents": [
+          "RootPost"
+        ],
+        "SyncedEventProperties": {
+          "RootPost": [
+            "Path",
+            "Method"
+          ]
+        }
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.DirectInvocation.WorkflowFunction_PlaceOrder_Generated::PlaceOrder",
+        "Events": {
+          "RootPost": {
+            "Type": "HttpApi",
+            "Properties": {
+              "Path": "/direct/orders",
+              "Method": "POST"
+            }
+          }
+        }
+      }
+    },
+    "SqsEventBridgeDemoEventBridgeAnalyticsFunctionHandleOrderPlacedGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations"
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.EventBridge.AnalyticsFunction_HandleOrderPlaced_Generated::HandleOrderPlaced"
+      }
+    },
+    "SqsEventBridgeDemoEventBridgeFulfilmentFunctionHandleOrderPlacedGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations"
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.EventBridge.FulfilmentFunction_HandleOrderPlaced_Generated::HandleOrderPlaced"
+      }
+    },
+    "SqsEventBridgeDemoEventBridgeNotificationsFunctionHandleOrderPlacedGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations"
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.EventBridge.NotificationsFunction_HandleOrderPlaced_Generated::HandleOrderPlaced"
+      }
+    },
+    "SqsEventBridgeDemoEventBridgeOrderPublisherFunctionPlaceOrderGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations",
+        "SyncedEvents": [
+          "RootPost"
+        ],
+        "SyncedEventProperties": {
+          "RootPost": [
+            "Path",
+            "Method"
+          ]
+        }
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.EventBridge.OrderPublisherFunction_PlaceOrder_Generated::PlaceOrder",
+        "Events": {
+          "RootPost": {
+            "Type": "HttpApi",
+            "Properties": {
+              "Path": "/eventbridge/orders",
+              "Method": "POST"
+            }
+          }
+        }
+      }
+    },
+    "SqsEventBridgeDemoSqsOrderConsumerFunctionProcessOrdersGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations"
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.Sqs.OrderConsumerFunction_ProcessOrders_Generated::ProcessOrders"
+      }
+    },
+    "SqsEventBridgeDemoSqsOrderProducerFunctionPlaceOrderGenerated": {
+      "Type": "AWS::Serverless::Function",
+      "Metadata": {
+        "Tool": "Amazon.Lambda.Annotations",
+        "SyncedEvents": [
+          "RootPost"
+        ],
+        "SyncedEventProperties": {
+          "RootPost": [
+            "Path",
+            "Method"
+          ]
+        }
+      },
+      "Properties": {
+        "Runtime": "dotnet10",
+        "CodeUri": ".",
+        "MemorySize": 512,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambdaBasicExecutionRole"
+        ],
+        "PackageType": "Zip",
+        "Handler": "SqsEventBridgeDemo::SqsEventBridgeDemo.Sqs.OrderProducerFunction_PlaceOrder_Generated::PlaceOrder",
+        "Events": {
+          "RootPost": {
+            "Type": "HttpApi",
+            "Properties": {
+              "Path": "/sqs/orders",
+              "Method": "POST"
+            }
+          }
+        }
+      }
+    }
+  }
+}

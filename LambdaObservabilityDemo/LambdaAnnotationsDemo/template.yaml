@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Annotations Demo - Complete .NET API on Lambda
+
+Parameters:
+  RotelOtlpExporterEndpoint:
+    Type: String
+    Default: ""
+    Description: "Production OTLP backend endpoint for Rotel (e.g. https://api.axiom.co)"
+  RotelOtlpExporterHeaders:
+    Type: String
+    Default: ""
+    Description: "Authentication headers for Rotel production backend (e.g. Authorization=Bearer TOKEN)"
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: dotnet10
+    Architectures:
+      - x86_64
+    Layers:
+      - !Sub arn:aws:lambda:${AWS::Region}:418653438961:layer:rotel-extension-amd64:4
+    Environment:
+      Variables:
+        ITEMS_TABLE_NAME: !Ref ItemsTable
+        OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+        ROTEL_OTLP_EXPORTER_ENDPOINT: !Ref RotelOtlpExporterEndpoint
+        ROTEL_OTLP_EXPORTER_CUSTOM_HEADERS: !Ref RotelOtlpExporterHeaders
+
+Resources:
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+
+  GetRootFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetRoot_Generated::GetRoot
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        RootGet:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: GET
+
+  GetItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItems_Generated::GetItems
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        ItemsGet:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: GET
+
+  GetItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItem_Generated::GetItem
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        ItemGet:
+          Type: HttpApi
+          Properties:
+            Path: /items/{id}
+            Method: GET
+
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_CreateItem_Generated::CreateItem
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ItemsTable
+      Events:
+        ItemPost:
+          Type: HttpApi
+          Properties:
+            Path: /items
+            Method: POST
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  ItemsTableName:
+    Description: DynamoDB Items table name
+    Value: !Ref ItemsTable

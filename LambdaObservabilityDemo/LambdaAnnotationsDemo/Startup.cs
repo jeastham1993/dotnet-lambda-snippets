@@ -1,0 +1,16 @@
+using Amazon.DynamoDBv2;
+using Amazon.Lambda.Annotations;
+using LambdaAnnotationsDemo.Services;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace LambdaAnnotationsDemo;
+
+[LambdaStartup]
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddAWSService<IAmazonDynamoDB>();
+        services.AddSingleton<IItemService, ItemService>();
+    }
+}

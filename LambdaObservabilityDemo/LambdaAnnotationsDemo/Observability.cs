@@ -19,5 +19,6 @@ internal static class Observability
             .AddAWSInstrumentation()
             .AddSource(ServiceName)
             .AddOtlpExporter()
-            .Build()!;
+            .Build() ?? throw new InvalidOperationException(
+                "OpenTelemetry TracerProvider failed to build. Check exporter configuration.");
 }

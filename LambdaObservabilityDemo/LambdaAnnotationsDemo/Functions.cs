@@ -24,7 +24,11 @@ public class Functions
     public Task<string> GetRoot(ILambdaContext context)
         => AWSLambdaWrapper.TraceAsync(
                Observability.TracerProvider,
-               async (_, _) => "Hello from Lambda Annotations!",
+               // context is passed as both TInput and ILambdaContext:
+               // Lambda Annotations hides the raw APIGatewayHttpApiV2ProxyRequest from handler methods,
+               // so we cannot pass it as TInput for upstream trace-context extraction.
+               // Passing ILambdaContext as TInput still creates the root Lambda span correctly.
+               (_, _) => Task.FromResult("Hello from Lambda Annotations!"),
                context, context);
 
     [LambdaFunction]
@@ -32,7 +36,7 @@ public class Functions
     public Task<IEnumerable<Item>> GetItems(ILambdaContext context)
         => AWSLambdaWrapper.TraceAsync(
                Observability.TracerProvider,
-               async (_, _) => await _itemService.GetAllItems(),
+               (_, _) => _itemService.GetAllItems(),
                context, context);
 
     [LambdaFunction]
@@ -46,8 +50,12 @@ public class Functions
                    var item = await _itemService.GetItem(id);
 
                    if (item is null)
+                   {
+                       Activity.Current?.SetStatus(ActivityStatusCode.Error, "item not found");
                        return (IHttpResult)HttpResults.NotFound($"Item with id '{id}' not found");
+                   }
 
+                   Activity.Current?.SetStatus(ActivityStatusCode.Ok);
                    return (IHttpResult)HttpResults.Ok(item);
                },
                context, context);
@@ -61,6 +69,7 @@ public class Functions
                {
                    Activity.Current?.SetTag("item.name", request.Name);
                    var item = await _itemService.CreateItem(request);
+                   // Tags the root/handler span with the result — item.create child span already closed
                    Activity.Current?.SetTag("item.id", item.Id);
                    return (IHttpResult)HttpResults.Created($"/items/{item.Id}", item);
                },

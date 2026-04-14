@@ -27,6 +27,8 @@ Globals:
         OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
         ROTEL_OTLP_EXPORTER_ENDPOINT: !Ref RotelOtlpExporterEndpoint
         ROTEL_OTLP_EXPORTER_CUSTOM_HEADERS: !Ref RotelOtlpExporterHeaders
+        OTEL_BSP_EXPORT_TIMEOUT: "2000"
+        OTEL_BSP_SCHEDULE_DELAY: "200"
 
 Resources:
   ItemsTable:
@@ -45,9 +47,6 @@ Resources:
     Properties:
       Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetRoot_Generated::GetRoot
       CodeUri: .
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ItemsTable
       Events:
         RootGet:
           Type: HttpApi

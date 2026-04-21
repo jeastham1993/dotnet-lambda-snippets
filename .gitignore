@@ -43,3 +43,7 @@ msbuild.wrn
 .claude/*.local.json
 .claude/*.local
 .claude-reliability/
+
+
+**/.aws-sam/*
+**/samconfig.toml

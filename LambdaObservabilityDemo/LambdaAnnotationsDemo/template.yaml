@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+Transform:
+  - AWS::Serverless-2016-10-31
 Description: Lambda Annotations Demo - Complete .NET API on Lambda
 
 Parameters:
@@ -10,7 +11,19 @@ Parameters:
   RotelOtlpExporterHeaders:
     Type: String
     Default: ""
+    NoEcho: true
     Description: "Authentication headers for Rotel production backend (e.g. Authorization=Bearer TOKEN)"
+  OtelServiceName:
+    Type: String
+    Default: "lambda-annotations-demo"
+    Description: "OTEL service name reported in traces - override per environment (e.g. lambda-annotations-demo-prod)"
+  RotelOtlpExporterProtocol:
+    Type: String
+    Default: "http"
+    AllowedValues:
+      - "http"
+      - "grpc"
+    Description: "Protocol Rotel uses to forward traces to the backend (Datadog requires http)"
 
 Globals:
   Function:
@@ -27,8 +40,10 @@ Globals:
         OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
         ROTEL_OTLP_EXPORTER_ENDPOINT: !Ref RotelOtlpExporterEndpoint
         ROTEL_OTLP_EXPORTER_CUSTOM_HEADERS: !Ref RotelOtlpExporterHeaders
+        OTEL_SERVICE_NAME: !Ref OtelServiceName
         OTEL_BSP_EXPORT_TIMEOUT: "2000"
         OTEL_BSP_SCHEDULE_DELAY: "200"
+        ROTEL_OTLP_EXPORTER_PROTOCOL: !Ref RotelOtlpExporterProtocol
 
 Resources:
   ItemsTable:
@@ -60,7 +75,7 @@ Resources:
       Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItems_Generated::GetItems
       CodeUri: .
       Policies:
-        - DynamoDBCrudPolicy:
+        - DynamoDBReadPolicy:
             TableName: !Ref ItemsTable
       Events:
         ItemsGet:
@@ -75,7 +90,7 @@ Resources:
       Handler: LambdaAnnotationsDemo::LambdaAnnotationsDemo.Functions_GetItem_Generated::GetItem
       CodeUri: .
       Policies:
-        - DynamoDBCrudPolicy:
+        - DynamoDBReadPolicy:
             TableName: !Ref ItemsTable
       Events:
         ItemGet:
